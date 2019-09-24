@@ -117,7 +117,7 @@ void loop() {
     reconnect();
   }
   client.loop();
-  StaticJsonBuffer buffers(300);
+  StaticJsonBuffer<300> buffers;
   JsonObject& data = buffers.createObject()
   data["jenis_iot"] = "........";
   data["long"] = ".......";
