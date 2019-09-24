@@ -118,7 +118,7 @@ void loop() {
   }
   client.loop();
   StaticJsonBuffer<300> buffers;
-  JsonObject& data = buffers.createObject()
+  JsonObject& data = buffers.createObject();
   data["jenis_iot"] = "........";
   data["long"] = ".......";
   data["lat"] = ".......";
@@ -129,7 +129,7 @@ void loop() {
   data["timestamp_device"] = "........";
   data["kode_device"] = "...........";
   String publisheddata;
-  data.printTo(publishedData);
+  data.printTo(publisheddata);
   
   Serial.println(publisheddata);
   client.publish(mqtt_out_topic, (char*)publisheddata.c_str());
