@@ -117,7 +117,8 @@ void loop() {
     reconnect();
   }
   client.loop();
-  DynamicJsonDocument data(500);
+  StaticJsonBuffer buffers(300);
+  JsonObject& data = buffers.createObject()
   data["jenis_iot"] = "........";
   data["long"] = ".......";
   data["lat"] = ".......";
@@ -128,7 +129,7 @@ void loop() {
   data["timestamp_device"] = "........";
   data["kode_device"] = "...........";
   String publisheddata;
-  serializeJson(data, publisheddata);
+  data.printTo(publishedData);
   
   Serial.println(publisheddata);
   client.publish(mqtt_out_topic, (char*)publisheddata.c_str());
