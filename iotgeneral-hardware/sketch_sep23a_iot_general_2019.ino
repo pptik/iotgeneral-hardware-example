@@ -13,10 +13,10 @@
 // Update these with values suitable for your network.
 
 const char* ssid = "LSKK_AP2.1";
-const char* password = "lskk@ppejuang";
+const char* password = "...";
 const char* mqtt_server = "rmq1.pptik.id";
 const char* mqtt_user = "/iotgeneral:iotgeneral";
-const char* mqtt_pass = "iotgeneral2019";
+const char* mqtt_pass = "...";
 const char* CL = "iot-general-01";
 
 char msg[100];
