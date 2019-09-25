@@ -1,74 +1,67 @@
 /*
- Basic ESP8266 MQTT example
- This sketch demonstrates the capabilities of the pubsub library in combination
- with the ESP8266 board/library.
- It connects to an MQTT server then:
-  - publishes "hello world" to the topic "outTopic" every two seconds
-  - subscribes to the topic "inTopic", printing out any messages
-    it receives. NB - it assumes the received payloads are strings not binary
-  - If the first character of the topic "inTopic" is an 1, switch ON the ESP Led,
-    else switch it off
- It will reconnect to the server if the connection is lost using a blocking
- reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
- achieve the same result without blocking the main loop.
- To install the ESP8266 board, (using Arduino 1.6.4+):
-  - Add the following 3rd party board manager under "File -> Preferences -> Additional Boards Manager URLs":
-       http://arduino.esp8266.com/stable/package_esp8266com_index.json
-  - Open the "Tools -> Board -> Board Manager" and click install for the ESP8266"
-  - Select your ESP8266 in "Tools -> Board"
+    Develop by      : Fahmi Nurfadilah 
+    Email           : fahmi.nurfadilah1412@gmail.com
+    Updated by      : Vitradisa Pratama
+    Email           : vitradisa@pptik.itb.ac.id
+    Project         : IoT General
+    Version         : 1.1
 */
 
-#include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
 
 // Update these with values suitable for your network.
 
-const char* ssid = "................";
-const char* password = "................";
+const char* ssid = "........";
+const char* password = "........";
 const char* mqtt_server = "rmq1.pptik.id";
-const char* mqtt_username = ".............";
-const char* mqtt_password = ".............";
-const char* mqtt_clientid = ".............";
-const char* mqtt_in_topic = ".............";
-const char* mqtt_out_topic = "............";
+const char* mqtt_user = "/iotgeneral:iotgeneral";
+const char* mqtt_pass = "........";
+const char* CL = "........";
+const char* mqtt_pub_topic = "general";
 
-char* data;
-char message_buffer[10];
-
+char msg[100];
+const int LED = 13;
 WiFiClient espClient;
 PubSubClient client(espClient);
-long lastMsg = 0;
-char msg[50];
-int value = 0;
 
-void setup() {
-  pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
-  Serial.begin(115200);
-  setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
-}
+byte mac[6];
+String MACAddress;
 
 void setup_wifi() {
-
   delay(10);
   // We start by connecting to a WiFi network
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
-
   WiFi.begin(ssid, password);
-
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+}
+
+String mac2String(byte ar[]) {
+  String s;
+  for (byte i = 0; i < 6; ++i)
+  {
+    char buf[3];
+    sprintf(buf, "%2X", ar[i]);
+    s += buf;
+    if (i < 5) s += ':';
+  }
+  return s;
+}
+
+void printMACAddress() {
+  WiFi.macAddress(mac);
+  MACAddress = mac2String(mac);
+  Serial.println(MACAddress);
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -79,60 +72,65 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
-
   // Switch on the LED if an 1 was received as first character
   if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is acive low on the ESP-01)
+    digitalWrite(LED, HIGH);   // Turn the LED on (Note that HIGH is the voltage level
   } else {
-    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+    digitalWrite(LED, LOW);  // Turn the LED off by making the voltage LOW
   }
-
 }
 
 void reconnect() {
   // Loop until we're reconnected
+  printMACAddress();
+  const char* CL;
+  CL = MACAddress.c_str();
+  Serial.println(CL);
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect(mqtt_clientid, mqtt_username, mqtt_password)) {
+    if (client.connect(CL, mqtt_user, mqtt_pass)) {
       Serial.println("connected");
-      // Once connected, publish an announcement...
-      //client.publish(mqtt_out_topic, "hello world");
-      // ... and resubscribe
-      //client.subscribe(mqtt_in_topic);
+      digitalWrite(LED, HIGH);
     } else {
+      digitalWrite(LED, LOW);
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
+      ESP.restart();
       delay(5000);
+
     }
   }
 }
-void loop() {
 
+void setup()
+{
+  pinMode(LED, OUTPUT);
+  //pinMode(input, INPUT);
+  Serial.begin(115200);
+  setup_wifi();
+  printMACAddress();
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+}
+void loop() {
+  String pubmsg = "";
   if (!client.connected()) {
     reconnect();
   }
   client.loop();
-  StaticJsonBuffer<300> buffers;
-  JsonObject& data = buffers.createObject();
-  data["jenis_iot"] = "........";
-  data["long"] = ".......";
-  data["lat"] = ".......";
-  data["data_1"] = ".....";
-  data["data_2"] = ".....";
-  data["data_3"] = ".....";
-  data["data_4"] = ".....";
-  data["timestamp_device"] = "........";
-  data["kode_device"] = "...........";
-  String publisheddata;
-  data.printTo(publisheddata);
-  
-  Serial.println(publisheddata);
-  client.publish(mqtt_out_topic, (char*)publisheddata.c_str());
-
-  delay(1000);
+  StaticJsonBuffer<300> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root["jenis_iot"] = ("........");
+  root["long"] = 0;
+  root["lat"] = 0;
+  root["data_1"] = 0;
+  root["timestamp_device"] = ("........");
+  root["kode_device"] = ("........");
+  Serial.print("Publish message: ");
+  root.printTo(pubmsg);
+  Serial.println(pubmsg);
+  client.publish(mqtt_pub_topic, pubmsg.c_str());
+  delay(5000);
 }
