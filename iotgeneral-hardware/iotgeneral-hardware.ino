@@ -4,12 +4,11 @@
     Updated by      : Vitradisa Pratama
     Email           : vitradisa@pptik.itb.ac.id
     Project         : IoT General
-    Version         : 1.1
+    Version         : 1.2
 */
 
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
-#include <ArduinoJson.h>
 
 // Update these with values suitable for your network.
 
@@ -120,16 +119,17 @@ void loop() {
     reconnect();
   }
   client.loop();
-  StaticJsonBuffer<300> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  root["jenis_iot"] = ("........");
-  root["long"] = 0;
-  root["lat"] = 0;
-  root["data_1"] = 0;
-  root["timestamp_device"] = ("........");
-  root["kode_device"] = ("........");
+  String jenis_iot = "........";
+  String longitude = "0";
+  String latitude = "0";
+  String data_1 = "0";
+  String data_2 = "0";
+  String data_3 = "0";
+  String data_4 = "0";
+  String timestamp_device = "........";
+  String kode_device = "........";
   Serial.print("Publish message: ");
-  root.printTo(pubmsg);
+  pubmsg = "#" + jenis_iot + "#" + longitude + "#" + latitude + "#" + data_1 + "#" + data_2 + "#" + data_3 + "#" + data_4 + "#" + timestamp_device + "#" + kode_device;
   Serial.println(pubmsg);
   client.publish(mqtt_pub_topic, pubmsg.c_str());
   delay(5000);
